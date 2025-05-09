@@ -148,7 +148,7 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
       <Link href="/chat" className={linkClass}>
         AI 채팅
       </Link>
-      <Link href="/chat" className={linkClass}>
+      <Link href="/groupchat" className={linkClass}>
         채팅방
       </Link>
       <Link href="/community" className={linkClass}>
