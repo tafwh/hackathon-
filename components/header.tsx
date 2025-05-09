@@ -80,7 +80,10 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
         시나리오
       </Link>
       <Link href="/chat" className={linkClass}>
-        채팅
+        AI 채팅
+      </Link>
+      <Link href="/chat" className={linkClass}>
+        채팅방
       </Link>
       <Link href="/community" className={linkClass}>
         커뮤니티
