@@ -28,15 +28,20 @@ export default function ChatPage() {
   // Socket connection
   useEffect(() => {
     const newSocket = io('http://localhost:8000', {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
       reconnection: true,
-      reconnectionAttempts: Infinity,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
       timeout: 20000,
       autoConnect: true,
       forceNew: true,
-      withCredentials: true
+      withCredentials: true,
+      path: '/socket.io/',
+      extraHeaders: {
+        'Access-Control-Allow-Origin': 'http://localhost:3000'
+      },
+      secure: true,
+      rejectUnauthorized: false
     })
 
     newSocket.on('connect', () => {
@@ -66,35 +71,53 @@ export default function ChatPage() {
   // Join chat and fetch messages
   useEffect(() => {
     if (socket && user) {
-      // Join the group chat
-      socket.emit('join', {
-        room: 'group-chat',
-        username: user.name || 'Anonymous'
-      })
-
-      // Fetch existing messages
-      fetch('http://localhost:8000/api/chat/group-chat/messages', {
-        credentials: 'include'
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log('Fetched messages:', data)
-          setMessages(data.reverse())
-        })
-        .catch(error => {
-          console.error('Error fetching messages:', error)
+      try {
+        // Join the group chat
+        socket.emit('join', {
+          room: 'group-chat',
+          username: user.name || 'Anonymous'
         })
 
-      // Listen for new messages
-      socket.on('message', (msg: Message) => {
-        console.log('New message received:', msg)
-        setMessages(prev => [...prev, msg])
-      })
+        // Fetch existing messages
+        fetch('http://localhost:8000/api/chat/group-chat/messages', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include'
+        })
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`)
+            }
+            return res.json()
+          })
+          .then(data => {
+            console.log('Fetched messages:', data)
+            if (Array.isArray(data)) {
+              setMessages(data.reverse())
+            } else {
+              console.error('Invalid message data format:', data)
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching messages:', error)
+          })
 
-      // Listen for status messages
-      socket.on('status', (msg: { msg: string }) => {
-        console.log('Status message:', msg.msg)
-      })
+        // Listen for new messages
+        socket.on('message', (msg: Message) => {
+          console.log('New message received:', msg)
+          setMessages(prev => [...prev, msg])
+        })
+
+        // Listen for status messages
+        socket.on('status', (msg: { msg: string }) => {
+          console.log('Status message:', msg.msg)
+        })
+      } catch (error) {
+        console.error('Error in chat setup:', error)
+      }
     }
   }, [socket, user])
 
@@ -139,26 +162,36 @@ export default function ChatPage() {
             {messages.map(msg => (
               <div
                 key={msg._id}
-                className={`flex items-start gap-2 ${
-                  msg.user_id === user?.id ? 'flex-row-reverse' : ''
+                className={`w-full flex ${
+                  msg.username === user?.name ? 'justify-end' : 'justify-start'
                 }`}
               >
-                <Avatar>
-                  <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{msg.username[0]}</AvatarFallback>
-                </Avatar>
-                <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    msg.user_id === user?.id
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-gray-100'
-                  }`}
-                >
-                  <p className="text-sm font-semibold mb-1">{msg.username}</p>
-                  <p>{msg.content}</p>
-                  <p className="text-xs mt-1 opacity-70">
-                    {formatTime(msg.timestamp)}
-                  </p>
+                <div className="flex items-start gap-2 max-w-[70%]">
+                  {msg.username !== user?.name && (
+                    <Avatar>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback>{msg.username[0]}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`rounded-lg p-3 ${
+                      msg.username === user?.name
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-gray-100'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold mb-1">{msg.username}</p>
+                    <p>{msg.content}</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {formatTime(msg.timestamp)}
+                    </p>
+                  </div>
+                  {msg.username === user?.name && (
+                    <Avatar>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback>{msg.username[0]}</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               </div>
             ))}

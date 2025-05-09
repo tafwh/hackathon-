@@ -67,7 +67,7 @@ export default function ChatPage() {
     ])
   }
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return
 
     // 사용자 메시지 추가
@@ -81,41 +81,47 @@ export default function ChatPage() {
     setInput("")
     setIsLoading(true)
 
-    // AI 응답 시뮬레이션
-    setTimeout(() => {
-      // 파트너 유형에 따른 모의 AI 응답 생성
-      let response = ""
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          partnerId: selectedPartner.id,
+          partnerName: selectedPartner.name,
+          partnerRole: selectedPartner.role,
+        }),
+      })
 
-      switch (selectedPartner.id) {
-        case "friend":
-          response = "재밌네! 이번 주말에는 뭐 하고 싶어?"
-          break
-        case "teacher":
-          response = "흥미로운 관점이네요. 수업에서 논의한 내용과 어떻게 연관되는지 생각해 보셨나요?"
-          break
-        case "boss":
-          response = "의견 감사합니다. 이것이 우리의 분기별 목표에 어떻게 맞는지 논의해 봅시다."
-          break
-        case "colleague":
-          response = "공유해 주셔서 감사합니다. 저도 비슷한 것을 작업하고 있었어요. 함께 협력해 볼까요?"
-          break
-        case "parent":
-          response = "이야기해 줘서 고마워. 이것에 대해 어떤 기분이 들어?"
-          break
-        default:
-          response = "흥미롭네요. 그것에 대해 더 자세히 알려주세요."
+      if (!response.ok) {
+        throw new Error('API 요청 실패')
       }
 
+      const data = await response.json()
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: response,
+        text: data.response,
         timestamp: new Date(),
       }
 
       setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      console.error('채팅 API 오류:', error)
+      // 에러 발생 시 사용자에게 알림
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: "그래? 왜 그런 기분이 드는지 알려줄래?",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   const toggleRecording = () => {

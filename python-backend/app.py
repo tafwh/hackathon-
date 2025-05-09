@@ -5,19 +5,25 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import bcrypt
+import openai
 from datetime import datetime
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
 # MongoDB connection
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/scla?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true&connectTimeoutMS=30000&socketTimeoutMS=30000')
+
 try:
-    client = MongoClient('mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/')
+    client = MongoClient(
+        MONGODB_URI,
+        serverSelectionTimeoutMS=30000,
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+        maxPoolSize=50,
+        minPoolSize=10,
+        maxIdleTimeMS=30000
+    )
     # Test the connection
     client.admin.command('ping')
     print("Successfully connected to MongoDB!")
@@ -27,29 +33,91 @@ except Exception as e:
 
 db = client.scla
 users = db.users
+<<<<<<< HEAD
 openai.api_key = os.getenv('OPENAI_API_KEY')
 print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
 openai.api_base = "https://api.openai.com/v1"
+=======
+messages = db.messages
+openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_base = "https://api.openai.com/v1"
+
+>>>>>>> a09c02ece1449a77853fec9eeed8d13160517b83
 # Flask app setup
 app = Flask(__name__)
-CORS(app, 
-     resources={r"/*": {
-         "origins": ["http://localhost:3000"],
-         "methods": ["GET", "POST", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": True
-     }}
-)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 socketio = SocketIO(
     app,
     cors_allowed_origins=["http://localhost:3000"],
-    ping_timeout=60,
-    ping_interval=25,
     async_mode='threading',
     logger=True,
-    engineio_logger=True
+    engineio_logger=True,
+    ping_timeout=60,
+    ping_interval=25,
+    max_http_buffer_size=1e8,
+    allow_upgrades=True,
+    always_connect=True
 )
+
+# WebSocket events
+@socketio.on('connect')
+def handle_connect():
+    print(f"Client connected: {request.sid}")
+    return True
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f"Client disconnected: {request.sid}")
+
+@socketio.on('join')
+def on_join(data):
+    try:
+        room = data['room']
+        join_room(room)
+        print(f"User {data['username']} joined {room}")
+        emit('status', {'msg': f"{data['username']} has joined the chat."}, room=room)
+    except Exception as e:
+        print(f"Error in join event: {e}")
+        return False
+
+@socketio.on('leave')
+def on_leave(data):
+    try:
+        room = data['room']
+        leave_room(room)
+        print(f"User {data['username']} left {room}")
+        emit('status', {'msg': f"{data['username']} has left the chat."}, room=room)
+    except Exception as e:
+        print(f"Error in leave event: {e}")
+        return False
+
+@socketio.on('message')
+def handle_message(data):
+    try:
+        room = data['room']
+        message = {
+            'room': room,
+            'user_id': data['user_id'],
+            'username': data['username'],
+            'content': data['message'],
+            'timestamp': datetime.utcnow()
+        }
+        print(f"Received message: {message}")
+        result = messages.insert_one(message)
+        message['_id'] = str(result.inserted_id)
+        message['timestamp'] = message['timestamp'].isoformat()
+        emit('message', message, room=room)
+    except Exception as e:
+        print(f"Error handling message: {e}")
+        return False
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -88,10 +156,34 @@ def register():
         print(f"Error in register endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Chat endpoints
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+        if not data or not data.get("message"):
+            return jsonify({"error": "Message is required"}), 400
+
+        user_message = data.get("message")
+
+        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "명료한 챗봇입니다."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        reply = response.choices[0].message.content
+        return jsonify({"response": reply})
+    except Exception as e:
+        print("❌ 오류 발생:", e)
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/chat/group-chat/messages', methods=['GET'])
 def get_messages():
     try:
+<<<<<<< HEAD
         data = request.get_json()
         if not data or not data.get("message"):
             return jsonify({"error": "Message is required"}), 400
@@ -113,5 +205,21 @@ def get_messages():
     except Exception as e:
         print(f"Error handling message: {e}")
 
+=======
+        # Get messages from MongoDB
+        chat_messages = list(messages.find({'room': 'group-chat'}).sort('timestamp', -1).limit(50))
+        
+        # Convert ObjectId to string and format timestamp
+        for msg in chat_messages:
+            msg['_id'] = str(msg['_id'])
+            msg['timestamp'] = msg['timestamp'].isoformat()
+        
+        return jsonify(chat_messages)
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
+        return jsonify({'error': str(e)}), 500
+
+>>>>>>> a09c02ece1449a77853fec9eeed8d13160517b83
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8000, debug=True) 
+
