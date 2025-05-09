@@ -38,7 +38,6 @@ messages = db.messages
 openai.api_key = os.getenv('OPENAI_API_KEY')
 print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
 openai.api_base = "https://api.openai.com/v1"
-
 # Flask app setup
 app = Flask(__name__)
 CORS(app, resources={
@@ -186,28 +185,18 @@ def chat():
 @app.route('/api/chat/group-chat/messages', methods=['GET'])
 def get_messages():
     try:
-
-        data = request.get_json()
-        if not data or not data.get("message"):
-            return jsonify({"error": "Message is required"}), 400
-
-        user_message = data.get("message")
-
-        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "명료한 챗봇입니다."},
-                {"role": "user", "content": user_message}
-            ]
-        )
-
-        reply = response.choices[0].message.content
-        return jsonify({"response": reply})
-        print(reply)
+        # Get messages from MongoDB
+        chat_messages = list(messages.find({'room': 'group-chat'}).sort('timestamp', -1).limit(50))
+        
+        # Convert ObjectId to string and format timestamp
+        for msg in chat_messages:
+            msg['_id'] = str(msg['_id'])
+            msg['timestamp'] = msg['timestamp'].isoformat()
+        
+        return jsonify(chat_messages)
     except Exception as e:
-        print(f"Error handling message: {e}")
-
+        print(f"Error fetching messages: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=8000, debug=True) 
