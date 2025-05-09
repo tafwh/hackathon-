@@ -40,6 +40,7 @@ openai.api_base = "https://api.openai.com/v1"
 =======
 messages = db.messages
 openai.api_key = os.getenv('OPENAI_API_KEY')
+print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
 openai.api_base = "https://api.openai.com/v1"
 
 >>>>>>> a09c02ece1449a77853fec9eeed8d13160517b83
@@ -167,7 +168,7 @@ def chat():
 
         client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         response = client.chat.completions.create(
-            model="gpt-4-turbo",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "명료한 챗봇입니다."},
                 {"role": "user", "content": user_message}
@@ -176,6 +177,7 @@ def chat():
 
         reply = response.choices[0].message.content
         return jsonify({"response": reply})
+        print(reply)
     except Exception as e:
         print("❌ 오류 발생:", e)
         return jsonify({"error": str(e)}), 500
