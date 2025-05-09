@@ -38,7 +38,7 @@ export default function Header() {
               </Button>
             </div>
           </nav>
-
+          
           {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <ModeToggle />
@@ -79,8 +79,8 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
       <Link href="/scenarios" className={linkClass}>
         시나리오
       </Link>
-      <Link href="/chat" className={linkClass}>
-        AI 채팅
+      <Link href="/chat" className={linkClass}> 
+        AI 채팅 /*여기 바뀜*/
       </Link>
       <Link href="/chat" className={linkClass}>
         채팅방
