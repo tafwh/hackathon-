@@ -48,7 +48,7 @@ openai.api_base = "https://api.openai.com/v1"
 app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000"],
+        "origins": ["http://localhost:3000", "http://172.16.12.38:3000"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
         "supports_credentials": True
@@ -165,12 +165,18 @@ def chat():
             return jsonify({"error": "Message is required"}), 400
 
         user_message = data.get("message")
+        partner_id = data.get("partnerId")
+        partner_name = data.get("partnerName")
+        partner_role = data.get("partnerRole")
 
+        # 파트너 정보를 시스템 메시지에 포함
+        system_message = f"당신은 {partner_name}입니다. {partner_role} 역할을 맡고 있습니다. 이 역할에 맞는 대화를 해주세요."
+        
         client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "명료한 챗봇입니다."},
+                {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ]
         )

@@ -8,21 +8,47 @@ import { Menu, X } from "lucide-react"
 import Image from "next/image"
 import { useUser } from "@/context/UserContext"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { user, setUser } = useUser()
+  const { toast } = useToast()
+  const router = useRouter()
 
   const handleLogout = () => {
+    // 1. 사용자 상태 초기화
     setUser(null)
+    
+    // 2. 로컬 스토리지 완전 삭제
     if (typeof window !== "undefined") {
-      localStorage.removeItem("user")
-      window.location.href = "/" // 홈으로 이동
+      localStorage.clear() // 모든 로컬 스토리지 데이터 삭제
+      // 또는 특정 키만 삭제하려면:
+      // localStorage.removeItem("user")
+      // localStorage.removeItem("token")
     }
+    
+    // 3. 쿠키 삭제
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // 4. 홈으로 리다이렉트
+    window.location.href = "/"
   }
 
   // 게스트 여부 판별: user?.id === "guest" 또는 user?.name === "게스트"
   const isGuest = user?.id === "guest"
+
+  // 보호된 라우트 클릭 핸들러
+  const handleProtectedRoute = (path: string) => {
+    if (!user) {
+      alert("로그인이 필요합니다. 먼저 로그인 해주세요.")
+      return
+    }
+    router.push(path)
+  }
 
   return (
     <header className="border-b border-gray-100 dark:border-gray-800">
@@ -41,7 +67,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <NavLinks />
+            <NavLinks handleProtectedRoute={handleProtectedRoute} linkClass="text-gray-700 dark:text-gray-200 hover:text-pink-500 dark:hover:text-pink-400 transition-colors" />
             <div className="flex items-center space-x-2">
               <ModeToggle />
               {!user && (
@@ -92,7 +118,7 @@ export default function Header() {
         {isMenuOpen && (
           <nav className="md:hidden py-4">
             <div className="flex flex-col space-y-4">
-              <NavLinks mobile />
+              <NavLinks handleProtectedRoute={handleProtectedRoute} mobile linkClass="text-gray-700 dark:text-gray-200 hover:text-pink-500 dark:hover:text-pink-400 transition-colors" />
               <div className="flex flex-col space-y-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                 {!user && (
                   <>
@@ -135,25 +161,41 @@ export default function Header() {
   )
 }
 
-function NavLinks({ mobile = false }: { mobile?: boolean }) {
-  const linkClass = mobile
-    ? "text-gray-700 dark:text-gray-200 hover:text-pink-500 dark:hover:text-pink-400 transition-colors"
-    : "text-gray-700 dark:text-gray-200 hover:text-pink-500 dark:hover:text-pink-400 transition-colors"
-
+function NavLinks({
+  handleProtectedRoute,
+  linkClass,
+  mobile = false
+}: {
+  handleProtectedRoute: (path: string) => void
+  linkClass: string
+  mobile?: boolean
+}) {
   return (
     <>
-      <Link href="/scenarios" className={linkClass}>
+      <button
+        onClick={() => handleProtectedRoute("/scenarios")}
+        className={linkClass}
+      >
         시나리오
-      </Link>
-      <Link href="/chat" className={linkClass}>
+      </button>
+      <button
+        onClick={() => handleProtectedRoute("/chat")}
+        className={linkClass}
+      >
         AI 채팅
-      </Link>
-      <Link href="/groupchat" className={linkClass}>
+      </button>
+      <button
+        onClick={() => handleProtectedRoute("/groupchat")}
+        className={linkClass}
+      >
         채팅방
-      </Link>
-      <Link href="/community" className={linkClass}>
+      </button>
+      <button
+        onClick={() => handleProtectedRoute("/community")}
+        className={linkClass}
+      >
         커뮤니티
-      </Link>
+      </button>
     </>
   )
 }

@@ -7,10 +7,14 @@ import { ArrowRight, MessageSquare, Award, Users, Brain } from "lucide-react"
 import Image from "next/image"
 import { useUser } from "@/context/UserContext"
 import { useState } from "react"
+import InfoModal from "@/components/InfoModal"
+import Footer from "@/components/footer"
 
 export default function Home() {
   const { user, setUser } = useUser()
   const [justLoggedIn, setJustLoggedIn] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [modalType, setModalType] = useState<"about" | "contact" | null>(null)
 
   const handleGuestLogin = () => {
     setUser({
@@ -31,6 +35,11 @@ export default function Home() {
     })
     setJustLoggedIn(true)
     setTimeout(() => setJustLoggedIn(false), 2000)
+  }
+
+  const openModal = (type: "about" | "contact") => {
+    setModalType(type)
+    setModalOpen(true)
   }
 
   return (
@@ -132,6 +141,32 @@ export default function Home() {
           </Button>
         )}
       </section>
+
+      <Footer onOpenModal={openModal} />
+      <InfoModal open={modalOpen} onClose={() => setModalOpen(false)}>
+        {modalType === "about" && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">더 알아보기</h2>
+            <p>여기에 더 알아보기 내용을 넣으세요.</p>
+          </div>
+        )}
+        {modalType === "contact" && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">문의하기</h2>
+            <form className="space-y-4">
+              <input className="w-full border rounded p-2" placeholder="이름" />
+              <input className="w-full border rounded p-2" placeholder="이메일" />
+              <textarea className="w-full border rounded p-2" placeholder="문의 내용을 입력하세요" rows={6} />
+              <button
+                type="submit"
+                className="w-full bg-pink-500 text-white rounded-full py-3 font-bold"
+              >
+                문의 보내기
+              </button>
+            </form>
+          </div>
+        )}
+      </InfoModal>
     </div>
   )
 }
