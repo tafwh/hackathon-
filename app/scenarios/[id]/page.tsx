@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -56,8 +56,8 @@ type Message = {
   }
 }
 
-export default function ScenarioPage({ params }: { params: { id: string } }) {
-  const scenarioId = params.id
+export default function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: scenarioId } = use(params)
   const scenario = scenarioData[scenarioId as keyof typeof scenarioData] || {
     title: "시나리오",
     description: "설명이 없습니다",
