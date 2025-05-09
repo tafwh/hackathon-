@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import bcrypt
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -22,10 +23,19 @@ except Exception as e:
 
 db = client.scla
 users = db.users
-
+openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_base = "https://api.openai.com/v1"
 # Flask app setup
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type"]}})
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
+
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -64,5 +74,30 @@ def register():
         print(f"Error in register endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+        if not data or not data.get("message"):
+            return jsonify({"error": "Message is required"}), 400
+
+        user_message = data.get("message")
+
+        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "명료한 챗봇입니다."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        reply = response.choices[0].message.content
+        return jsonify({"response": reply})
+    except Exception as e:
+        print("❌ 오류 발생:", e)
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True) 
+
