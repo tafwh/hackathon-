@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 export default function AuthPage() {
   return (
@@ -84,15 +85,55 @@ function LoginForm() {
 
 function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    setError('')
+
+    const form = e.target as HTMLFormElement
+    const formData = {
+      name: (form.elements.namedItem('name') as HTMLInputElement).value,
+      email: (form.elements.namedItem('signup-email') as HTMLInputElement).value,
+      password: (form.elements.namedItem('signup-password') as HTMLInputElement).value,
+      confirmPassword: (form.elements.namedItem('confirm-password') as HTMLInputElement).value
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
       setIsLoading(false)
-      // Redirect would happen here
-    }, 1500)
+      return
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed')
+      }
+
+      // Registration successful
+      router.push('/login')
+    } catch (err) {
+      console.error('Registration error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to connect to server. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
