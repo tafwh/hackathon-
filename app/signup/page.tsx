@@ -23,10 +23,10 @@ export default function AuthPage() {
         <Tabs defaultValue="signup">
           <CardHeader className="flex flex-col items-center">
             <Image
-              src="/placeholder.svg?height=80&width=80"
+              src="/de_profile.png"
               alt="소셜 큐 로고"
-              width={80}
-              height={80}
+              width={90}
+              height={90}
               className="rounded-full mb-4"
             />
             <TabsList className="grid w-full grid-cols-2 rounded-full">
@@ -120,7 +120,7 @@ function SignupForm() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/auth/register', {
+      const response = await fetch('http://172.16.12.38:8000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
