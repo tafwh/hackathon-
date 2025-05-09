@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-4 md:mb-0">
-            <p className="text-sm text-gray-500 dark:text-gray-400">© 2023 소셜큐. 모든 권리 보유.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">© 2025 큐업. 모든 권리 보유.</p>
           </div>
           <div className="flex space-x-6">
             <Link
