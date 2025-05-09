@@ -108,8 +108,8 @@ function SignupForm() {
     const form = e.target as HTMLFormElement
     const formData = {
       name: (form.elements.namedItem('name') as HTMLInputElement).value,
-      email: (form.elements.namedItem('signup-email') as HTMLInputElement).value,
-      password: (form.elements.namedItem('signup-password') as HTMLInputElement).value,
+      email: (form.elements.namedItem('email') as HTMLInputElement).value,
+      password: (form.elements.namedItem('password') as HTMLInputElement).value,
       confirmPassword: (form.elements.namedItem('confirm-password') as HTMLInputElement).value
     }
 
@@ -151,7 +151,7 @@ function SignupForm() {
         id: "user1",
         name: name || email.split("@")[0] || "사용자",
         email,
-        avatar: "/default_profile.png",
+        avatar: "/de_profile.png",
         // 게임화 필드 추가
         socialPoints: 0,
         level: 1,
@@ -191,6 +191,7 @@ function SignupForm() {
         <Label htmlFor="email">이메일</Label>
         <Input
           id="email"
+          name="email"
           type="email"
           placeholder="이메일을 입력하세요"
           value={email}
@@ -202,10 +203,21 @@ function SignupForm() {
         <Label htmlFor="password">비밀번호</Label>
         <Input
           id="password"
+          name="password"
           type="password"
           placeholder="비밀번호를 입력하세요"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">비밀번호 확인</Label>
+        <Input
+          id="confirm-password"
+          name="confirm-password"
+          type="password"
+          placeholder="비밀번호를 한 번 더 입력하세요"
           required
         />
       </div>

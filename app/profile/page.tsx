@@ -35,7 +35,7 @@ export default function ProfilePage() {
       <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 mb-8">
         <div className="flex items-center gap-6">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={user.avatar || "/default_profile.png"} alt={user.name} />
+            <AvatarImage src="/de_profile.png" alt={user.name} />
             <AvatarFallback>{user.name[0]}</AvatarFallback>
           </Avatar>
           <div>

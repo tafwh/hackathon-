@@ -17,6 +17,17 @@ export default function Home() {
       id: "guest",
       name: "게스트",
       email: "guest@example.com",
+      avatar: "/default_profile.png",
+      socialPoints: 0,
+      level: 1,
+      achievements: [],
+      dailyChallenges: [],
+      rank: {
+        current: 0,
+        weekly: 0,
+        monthly: 0
+      },
+      inventory: []
     })
     setJustLoggedIn(true)
     setTimeout(() => setJustLoggedIn(false), 2000)

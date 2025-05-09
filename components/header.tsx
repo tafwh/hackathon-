@@ -30,13 +30,13 @@ export default function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <Image
-              src="/placeholder.svg?height=40&width=40"
+              src="/logo.png"
               alt="소셜 큐 로고"
-              width={40}
-              height={40}
+              width={60}
+              height={60}
               className="rounded-full mr-2"
             />
-            <span className="text-xl font-bold text-pink-500">소설큐</span>
+            <span className="text-2xl font-bold text-pink-600">큐업</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -58,16 +58,16 @@ export default function Header() {
                 <>
                   <Button
                     onClick={handleLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white rounded-full"
+                    className="bg-pink-500 hover:b-pink-600 text-white rounded-full"
                     variant="destructive"
                   >
                     로그아웃
                   </Button>
                   <Link href="/profile">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-16 w-16">
                       <AvatarImage
-                        src={user.avatar ? user.avatar : "/logo.png"}
-                        alt={user.name}
+                        src="/de_profile.png"
+                        alt="프로필"
                       />
                       <AvatarFallback>
                         {isGuest ? "G" : user.name[0]}
@@ -99,7 +99,7 @@ export default function Header() {
                     <Button asChild variant="outline" className="rounded-full">
                       <Link href="/login">로그인</Link>
                     </Button>
-                    <Button asChild className="bg-pink-500 hover:bg-pink-600 rounded-full">
+                    <Button asChild className="bg-pink-300 hover:bg-pink-600 rounded-full">
                       <Link href="/signup">회원가입</Link>
                     </Button>
                   </>
@@ -108,16 +108,16 @@ export default function Header() {
                   <>
                     <Button
                       onClick={handleLogout}
-                      className="bg-red-500 hover:bg-red-600 text-white rounded-full"
+                      className="bg-pink-500 hover:bg-pink-600 text-white rounded-full"
                       variant="destructive"
                     >
                       로그아웃
                     </Button>
                     <Link href="/profile">
-                      <Avatar className="h-10 w-10">
+                      <Avatar className="h-16 w-16">
                         <AvatarImage
-                          src={user.avatar ? user.avatar : "/default_profile.png"}
-                          alt={user.name}
+                          src="/de_profile.png"
+                          alt="프로필"
                         />
                         <AvatarFallback>
                           {isGuest ? "G" : user.name[0]}

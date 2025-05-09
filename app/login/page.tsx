@@ -26,7 +26,7 @@ export default function LoginPage() {
         id: "user1",
         name: email.split("@")[0] || "사용자",
         email,
-        avatar: "/default_profile.png",
+        avatar: "/de_profile.png",
         socialPoints: 0,
         level: 1,
         achievements: [],
