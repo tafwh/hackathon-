@@ -1,19 +1,29 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import bcrypt
 import openai
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
 
 # MongoDB connection
-MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/scla?retryWrites=true&w=majority')
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/scla?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true&connectTimeoutMS=30000&socketTimeoutMS=30000')
 
 try:
-    client = MongoClient(MONGODB_URI)
+    client = MongoClient(
+        MONGODB_URI,
+        serverSelectionTimeoutMS=30000,
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+        maxPoolSize=50,
+        minPoolSize=10,
+        maxIdleTimeMS=30000
+    )
     # Test the connection
     client.admin.command('ping')
     print("Successfully connected to MongoDB!")
@@ -23,8 +33,10 @@ except Exception as e:
 
 db = client.scla
 users = db.users
+messages = db.messages
 openai.api_key = os.getenv('OPENAI_API_KEY')
 openai.api_base = "https://api.openai.com/v1"
+
 # Flask app setup
 app = Flask(__name__)
 CORS(app, resources={
@@ -36,6 +48,70 @@ CORS(app, resources={
     }
 })
 
+socketio = SocketIO(
+    app,
+    cors_allowed_origins=["http://localhost:3000"],
+    async_mode='threading',
+    logger=True,
+    engineio_logger=True,
+    ping_timeout=60,
+    ping_interval=25,
+    max_http_buffer_size=1e8,
+    allow_upgrades=True,
+    always_connect=True
+)
+
+# WebSocket events
+@socketio.on('connect')
+def handle_connect():
+    print(f"Client connected: {request.sid}")
+    return True
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print(f"Client disconnected: {request.sid}")
+
+@socketio.on('join')
+def on_join(data):
+    try:
+        room = data['room']
+        join_room(room)
+        print(f"User {data['username']} joined {room}")
+        emit('status', {'msg': f"{data['username']} has joined the chat."}, room=room)
+    except Exception as e:
+        print(f"Error in join event: {e}")
+        return False
+
+@socketio.on('leave')
+def on_leave(data):
+    try:
+        room = data['room']
+        leave_room(room)
+        print(f"User {data['username']} left {room}")
+        emit('status', {'msg': f"{data['username']} has left the chat."}, room=room)
+    except Exception as e:
+        print(f"Error in leave event: {e}")
+        return False
+
+@socketio.on('message')
+def handle_message(data):
+    try:
+        room = data['room']
+        message = {
+            'room': room,
+            'user_id': data['user_id'],
+            'username': data['username'],
+            'content': data['message'],
+            'timestamp': datetime.utcnow()
+        }
+        print(f"Received message: {message}")
+        result = messages.insert_one(message)
+        message['_id'] = str(result.inserted_id)
+        message['timestamp'] = message['timestamp'].isoformat()
+        emit('message', message, room=room)
+    except Exception as e:
+        print(f"Error handling message: {e}")
+        return False
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -104,6 +180,22 @@ def chat():
         print("❌ 오류 발생:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/chat/group-chat/messages', methods=['GET'])
+def get_messages():
+    try:
+        # Get messages from MongoDB
+        chat_messages = list(messages.find({'room': 'group-chat'}).sort('timestamp', -1).limit(50))
+        
+        # Convert ObjectId to string and format timestamp
+        for msg in chat_messages:
+            msg['_id'] = str(msg['_id'])
+            msg['timestamp'] = msg['timestamp'].isoformat()
+        
+        return jsonify(chat_messages)
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True) 
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True) 
 
