@@ -14,11 +14,24 @@ export default function Header() {
   const { user, setUser } = useUser()
 
   const handleLogout = () => {
+    // 1. 사용자 상태 초기화
     setUser(null)
+    
+    // 2. 로컬 스토리지 완전 삭제
     if (typeof window !== "undefined") {
-      localStorage.removeItem("user")
-      window.location.href = "/" // 홈으로 이동
+      localStorage.clear() // 모든 로컬 스토리지 데이터 삭제
+      // 또는 특정 키만 삭제하려면:
+      // localStorage.removeItem("user")
+      // localStorage.removeItem("token")
     }
+    
+    // 3. 쿠키 삭제
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // 4. 홈으로 리다이렉트
+    window.location.href = "/"
   }
 
   // 게스트 여부 판별: user?.id === "guest" 또는 user?.name === "게스트"

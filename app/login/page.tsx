@@ -59,7 +59,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md rounded-3xl">
         <CardHeader className="flex flex-col items-center">
           <Image
-            src="/placeholder.svg?height=80&width=80"
+            src="/de_profile.png"
             alt="소셜 큐 로고"
             width={80}
             height={80}

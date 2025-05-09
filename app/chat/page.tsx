@@ -20,15 +20,15 @@ type Message = {
   id: string
   sender: "user" | "ai"
   text: string
-  timestamp: Date
+  timestamp: string
 }
 
 const chatPartners: ChatPartner[] = [
-  { id: "friend", name: "지민", role: "친구", avatar: "/placeholder.svg?height=100&width=100" },
-  { id: "teacher", name: "김선생님", role: "선생님", avatar: "/placeholder.svg?height=100&width=100" },
-  { id: "boss", name: "이사장님", role: "사장님", avatar: "/placeholder.svg?height=100&width=100" },
-  { id: "colleague", name: "동료 현우", role: "직장 동료", avatar: "/placeholder.svg?height=100&width=100" },
-  { id: "parent", name: "어머니", role: "부모님", avatar: "/placeholder.svg?height=100&width=100" },
+  { id: "friend", name: "지민", role: "친구", avatar: "/jimin.png" },
+  { id: "teacher", name: "김선생님", role: "선생님", avatar: "mr.kim.png" },
+  { id: "boss", name: "이사장님", role: "사장님", avatar: "mr.lee.png" },
+  { id: "colleague", name: "동료 현우", role: "직장 동료", avatar: "friend.png" },
+  { id: "parent", name: "어머니", role: "부모님", avatar: "/mommy.png" },
 ]
 
 export default function ChatPage() {
@@ -39,7 +39,7 @@ export default function ChatPage() {
       id: "1",
       sender: "ai",
       text: `안녕하세요! 저는 ${chatPartners[0].name}입니다. 오늘 기분이 어떠세요?`,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     },
   ])
   const [input, setInput] = useState("")
@@ -62,7 +62,7 @@ export default function ChatPage() {
         id: Date.now().toString(),
         sender: "ai",
         text: `안녕하세요! 저는 ${partner.name}입니다. 오늘 기분이 어떠세요?`,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       },
     ])
   }
@@ -75,14 +75,14 @@ export default function ChatPage() {
       id: Date.now().toString(),
       sender: "user",
       text: input,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('http://172.16.83.92:8000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ export default function ChatPage() {
         id: (Date.now() + 1).toString(),
         sender: "ai",
         text: data.response,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       }
 
       setMessages((prev) => [...prev, aiMessage])
@@ -116,7 +116,7 @@ export default function ChatPage() {
         id: (Date.now() + 1).toString(),
         sender: "ai",
         text: "그래? 왜 그런 기분이 드는지 알려줄래?",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       }
       setMessages((prev) => [...prev, errorMessage])
     } finally {
@@ -129,8 +129,8 @@ export default function ChatPage() {
     // 실제 앱에서는 음성 인식 처리
   }
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
   return (
