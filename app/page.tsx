@@ -1,12 +1,36 @@
+"use client"
+
 import type React from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowRight, MessageSquare, Award, Users, Brain } from "lucide-react"
 import Image from "next/image"
+import { useUser } from "@/context/UserContext"
+import { useState } from "react"
 
 export default function Home() {
+  const { user, setUser } = useUser()
+  const [justLoggedIn, setJustLoggedIn] = useState(false)
+
+  const handleGuestLogin = () => {
+    setUser({
+      id: "guest",
+      name: "게스트",
+      email: "guest@example.com",
+    })
+    setJustLoggedIn(true)
+    setTimeout(() => setJustLoggedIn(false), 2000)
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* 안내 메시지 */}
+      {justLoggedIn && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full shadow z-50">
+          게스트로 로그인되었습니다!
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="flex flex-col items-center text-center mb-16">
         <div className="mb-8">
@@ -25,11 +49,11 @@ export default function Home() {
           안전한 환경에서 사회적 상호작용을 연습하고, 감정을 이해하며, 자신감을 키워보세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button asChild size="lg" className="bg-pink-500 hover:bg-pink-600 rounded-full">
-            <Link href="/signup">
-              시작하기 <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
+          {!user && (
+            <Button onClick={handleGuestLogin} size="lg" className="bg-pink-500 hover:bg-pink-600 rounded-full">
+              무료 체험 시작하기
+            </Button>
+          )}
           <Button asChild variant="outline" size="lg" className="rounded-full">
             <Link href="/about">더 알아보기</Link>
           </Button>
@@ -57,7 +81,7 @@ export default function Home() {
           />
           <FeatureCard
             icon={<Award className="h-10 w-10 text-pink-500" />}
-            title="게임화된 학습"
+            title="게임 학습"
             description="포인트를 얻고, 업적을 달성하며, 재미있는 일일 챌린지로 진행 상황을 추적해요."
           />
         </div>
@@ -91,9 +115,11 @@ export default function Home() {
         <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
           오늘 우리 커뮤니티에 가입하고 더 자신감 있는 사회적 상호작용을 향한 여정을 시작하세요.
         </p>
-        <Button asChild size="lg" className="bg-pink-500 hover:bg-pink-600 rounded-full">
-          <Link href="/signup">무료 체험 시작하기</Link>
-        </Button>
+        {!user && (
+          <Button onClick={handleGuestLogin} size="lg" className="bg-pink-500 hover:bg-pink-600 rounded-full">
+            무료 체험 시작하기
+          </Button>
+        )}
       </section>
     </div>
   )

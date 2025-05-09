@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Send, Mic, MicOff } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useUser } from "@/context/UserContext"
 
 type ChatPartner = {
   id: string
@@ -31,6 +32,7 @@ const chatPartners: ChatPartner[] = [
 ]
 
 export default function ChatPage() {
+  const { user } = useUser()
   const [selectedPartner, setSelectedPartner] = useState<ChatPartner>(chatPartners[0])
   const [messages, setMessages] = useState<Message[]>([
     {

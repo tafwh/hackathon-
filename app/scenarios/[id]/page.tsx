@@ -19,7 +19,7 @@ const scenarioData = {
     character: {
       name: "민지",
       role: "마케팅 매니저",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/default_profile.png?height=100&width=100",
       greeting: "안녕하세요! 전에 뵌 적이 없는 것 같네요. 저는 테크코프에서 마케팅을 담당하고 있는 민지라고 합니다.",
     },
   },
