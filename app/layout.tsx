@@ -4,8 +4,8 @@ import { Noto_Sans_KR } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Header from "@/components/header"
-import Footer from "@/components/footer"
 import { UserProvider } from "@/context/UserContext"
+import { Toaster } from "@/components/ui/toaster"
 
 const notoSansKr = Noto_Sans_KR({
   subsets: ["latin"],
@@ -13,7 +13,7 @@ const notoSansKr = Noto_Sans_KR({
 })
 
 export const metadata: Metadata = {
-  title: "소셜 큐 학습 앱",
+  title: "큐업",
   description: "자폐 스펙트럼 사용자를 위한 소셜 지원 웹 어플리케이션"
 }
 
@@ -29,7 +29,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             <Header />
             <main className="min-h-screen">{children}</main>
-            <Footer />
+            <Toaster />
           </ThemeProvider>
         </UserProvider>
       </body>
