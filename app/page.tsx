@@ -35,7 +35,7 @@ export default function Home() {
       <section className="flex flex-col items-center text-center mb-16">
         <div className="mb-8">
           <Image
-            src="/placeholder.svg?height=200&width=200"
+            src="/logo.png"
             alt="소셜 큐 로고"
             width={200}
             height={200}

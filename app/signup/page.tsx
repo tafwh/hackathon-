@@ -10,6 +10,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
 import Image from "next/image"
+
+
+import { useUser } from "@/context/UserContext"
+
 import { useRouter } from "next/navigation"
 
 export default function AuthPage() {
@@ -84,9 +88,17 @@ function LoginForm() {
 }
 
 function SignupForm() {
+  const { setUser } = useUser()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
   const [error, setError] = useState('')
   const router = useRouter()
+
+  const [justSignedUp, setJustSignedUp] = useState(false)
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -134,40 +146,77 @@ function SignupForm() {
     } finally {
       setIsLoading(false)
     }
+    setTimeout(() => {
+      setUser({
+        id: "user1",
+        name: name || email.split("@")[0] || "사용자",
+        email,
+        avatar: "/default_profile.png",
+        // 게임화 필드 추가
+        socialPoints: 0,
+        level: 1,
+        achievements: [],
+        dailyChallenges: [],
+        rank: {
+          current: 0,
+          weekly: 0,
+          monthly: 0
+        },
+        inventory: []
+      })
+      setIsLoading(false)
+      setJustSignedUp(true)
+      setTimeout(() => {
+        setJustSignedUp(false)
+        router.push("/")
+      }, 2000)
+    }, 1000)
+
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">이름</Label>
-        <Input id="name" placeholder="홍길동" required className="rounded-full" />
+        <Input
+          id="name"
+          type="text"
+          placeholder="이름을 입력하세요"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="signup-email">이메일</Label>
-        <Input id="signup-email" type="email" placeholder="your@email.com" required className="rounded-full" />
+        <Label htmlFor="email">이메일</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="이메일을 입력하세요"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="signup-password">비밀번호</Label>
-        <Input id="signup-password" type="password" required className="rounded-full" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="confirm-password">비밀번호 확인</Label>
-        <Input id="confirm-password" type="password" required className="rounded-full" />
+        <Label htmlFor="password">비밀번호</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="비밀번호를 입력하세요"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
       </div>
       <Button type="submit" className="w-full bg-pink-500 hover:bg-pink-600 rounded-full" disabled={isLoading}>
-        {isLoading ? "계정 생성 중..." : "계정 생성하기"}
+        {isLoading ? "가입 중..." : "회원가입"}
       </Button>
-      <p className="text-center text-sm text-gray-500">
-        가입함으로써 귀하는 당사의{" "}
-        <Link href="/terms" className="text-pink-500 hover:underline">
-          이용약관
-        </Link>{" "}
-        및{" "}
-        <Link href="/privacy" className="text-pink-500 hover:underline">
-          개인정보처리방침
-        </Link>
-        에 동의하게 됩니다.
-      </p>
+      {justSignedUp && (
+        <div className="text-center text-green-500">
+          회원가입이 완료되었습니다!
+        </div>
+      )}
     </form>
   )
 }

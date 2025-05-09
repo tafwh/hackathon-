@@ -66,7 +66,7 @@ export default function Header() {
                   <Link href="/profile">
                     <Avatar className="h-10 w-10">
                       <AvatarImage
-                        src={user.avatar ? user.avatar : "/default_profile.png?width=40&height=40"}
+                        src={user.avatar ? user.avatar : "/logo.png"}
                         alt={user.name}
                       />
                       <AvatarFallback>
@@ -78,7 +78,7 @@ export default function Header() {
               )}
             </div>
           </nav>
-          
+
           {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <ModeToggle />
@@ -145,8 +145,8 @@ function NavLinks({ mobile = false }: { mobile?: boolean }) {
       <Link href="/scenarios" className={linkClass}>
         시나리오
       </Link>
-      <Link href="/chat" className={linkClass}> 
-        AI 채팅 /*여기 바뀜*/
+      <Link href="/chat" className={linkClass}>
+        AI 채팅
       </Link>
       <Link href="/chat" className={linkClass}>
         채팅방

@@ -8,6 +8,33 @@ type User = {
   name: string
   email: string
   avatar?: string
+  socialPoints: number
+  level: number
+  achievements: {
+    id: string
+    title: string
+    description: string
+    progress: number
+    completed: boolean
+  }[]
+  dailyChallenges: {
+    id: string
+    title: string
+    description: string
+    completed: boolean
+    points: number
+  }[]
+  rank: {
+    current: number
+    weekly: number
+    monthly: number
+  }
+  inventory: {
+    id: string
+    type: 'avatar' | 'theme' | 'badge'
+    name: string
+    equipped: boolean
+  }[]
 } | null
 
 const UserContext = createContext<{

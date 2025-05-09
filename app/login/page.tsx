@@ -27,6 +27,16 @@ export default function LoginPage() {
         name: email.split("@")[0] || "사용자",
         email,
         avatar: "/default_profile.png",
+        socialPoints: 0,
+        level: 1,
+        achievements: [],
+        dailyChallenges: [],
+        rank: {
+          current: 0,
+          weekly: 0,
+          monthly: 0
+        },
+        inventory: []
       })
       setIsLoading(false)         // 1. 로딩 끝
       setJustLoggedIn(true)       // 2. 안내 메시지 표시
