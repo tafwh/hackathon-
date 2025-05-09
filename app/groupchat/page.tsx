@@ -162,26 +162,36 @@ export default function ChatPage() {
             {messages.map(msg => (
               <div
                 key={msg._id}
-                className={`flex items-start gap-2 ${
-                  msg.user_id === user?.id ? 'flex-row-reverse' : ''
+                className={`w-full flex ${
+                  msg.username === user?.name ? 'justify-end' : 'justify-start'
                 }`}
               >
-                <Avatar>
-                  <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{msg.username[0]}</AvatarFallback>
-                </Avatar>
-                <div
-                  className={`max-w-[70%] rounded-lg p-3 ${
-                    msg.user_id === user?.id
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-gray-100'
-                  }`}
-                >
-                  <p className="text-sm font-semibold mb-1">{msg.username}</p>
-                  <p>{msg.content}</p>
-                  <p className="text-xs mt-1 opacity-70">
-                    {formatTime(msg.timestamp)}
-                  </p>
+                <div className="flex items-start gap-2 max-w-[70%]">
+                  {msg.username !== user?.name && (
+                    <Avatar>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback>{msg.username[0]}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <div
+                    className={`rounded-lg p-3 ${
+                      msg.username === user?.name
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-gray-100'
+                    }`}
+                  >
+                    <p className="text-sm font-semibold mb-1">{msg.username}</p>
+                    <p>{msg.content}</p>
+                    <p className="text-xs mt-1 opacity-70">
+                      {formatTime(msg.timestamp)}
+                    </p>
+                  </div>
+                  {msg.username === user?.name && (
+                    <Avatar>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback>{msg.username[0]}</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               </div>
             ))}
