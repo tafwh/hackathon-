@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useUser } from "@/context/UserContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,42 +11,41 @@ import Link from "next/link"
 import Image from "next/image"
 
 export default function LoginPage() {
+  const { setUser } = useUser()
+  const router = useRouter()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  })
+  const [justLoggedIn, setJustLoggedIn] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    try {
-      // 여기에 실제 로그인 로직이 들어갈 예정
-      console.log("로그인 시도:", formData)
-      
-      // 로딩 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      // 로그인 성공 후 리다이렉트
-      // window.location.href = "/dashboard"
-    } catch (error) {
-      console.error("로그인 실패:", error)
-    } finally {
-      setIsLoading(false)
-    }
+    setTimeout(() => {
+      setUser({
+        id: "user1",
+        name: email.split("@")[0] || "사용자",
+        email,
+        avatar: "/default_profile.png",
+      })
+      setIsLoading(false)         // 1. 로딩 끝
+      setJustLoggedIn(true)       // 2. 안내 메시지 표시
+      setTimeout(() => {
+        setJustLoggedIn(false)
+        router.push("/")
+      }, 2000)
+    }, 1000)
   }
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12">
+      {/* 안내 메시지 */}
+      {justLoggedIn && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full shadow z-50">
+          로그인되었습니다!
+        </div>
+      )}
+
       <Card className="w-full max-w-md rounded-3xl">
         <CardHeader className="flex flex-col items-center">
           <Image
@@ -67,8 +68,8 @@ export default function LoginPage() {
                 placeholder="your@email.com" 
                 required 
                 className="rounded-full"
-                value={formData.email}
-                onChange={handleChange}
+                value={email}
+                onChange={e => setEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -87,8 +88,8 @@ export default function LoginPage() {
                 type="password" 
                 required 
                 className="rounded-full"
-                value={formData.password}
-                onChange={handleChange}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
               />
             </div>
             <Button 
