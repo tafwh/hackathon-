@@ -1,23 +1,19 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit, join_room, leave_room
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 import bcrypt
-from datetime import datetime
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+import openai
 
 # Load environment variables
 load_dotenv()
 
 # MongoDB connection
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/scla?retryWrites=true&w=majority')
+
 try:
-    client = MongoClient('mongodb+srv://cyasiaseeya:1234@scla.ahfumg7.mongodb.net/')
+    client = MongoClient(MONGODB_URI)
     # Test the connection
     client.admin.command('ping')
     print("Successfully connected to MongoDB!")
@@ -27,28 +23,19 @@ except Exception as e:
 
 db = client.scla
 users = db.users
-messages = db.messages
-
+openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_base = "https://api.openai.com/v1"
 # Flask app setup
 app = Flask(__name__)
-CORS(app, 
-     resources={r"/*": {
-         "origins": ["http://localhost:3000"],
-         "methods": ["GET", "POST", "OPTIONS"],
-         "allow_headers": ["Content-Type", "Authorization"],
-         "supports_credentials": True
-     }}
-)
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
-socketio = SocketIO(
-    app,
-    cors_allowed_origins=["http://localhost:3000"],
-    ping_timeout=60,
-    ping_interval=25,
-    async_mode='threading',
-    logger=True,
-    engineio_logger=True
-)
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
@@ -87,69 +74,30 @@ def register():
         print(f"Error in register endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
-# Chat endpoints
-@app.route('/api/chat/group-chat/messages', methods=['GET'])
-def get_messages():
+@app.route("/chat", methods=["POST"])
+def chat():
     try:
-        room_messages = list(messages.find({'room': 'group-chat'}).sort('timestamp', -1).limit(50))
-        messages_list = []
-        for msg in room_messages:
-            msg['_id'] = str(msg['_id'])
-            msg['timestamp'] = msg['timestamp'].isoformat()
-            messages_list.append(msg)
-        print(f"Fetched {len(messages_list)} messages")
-        return jsonify(messages_list)
+        data = request.get_json()
+        if not data or not data.get("message"):
+            return jsonify({"error": "Message is required"}), 400
+
+        user_message = data.get("message")
+
+        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "명료한 챗봇입니다."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        reply = response.choices[0].message.content
+        return jsonify({"response": reply})
     except Exception as e:
-        print(f"Error fetching messages: {e}")
-        return jsonify({'error': str(e)}), 500
-
-# WebSocket events
-@socketio.on('connect')
-def handle_connect():
-    print(f"Client connected: {request.sid}")
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print(f"Client disconnected: {request.sid}")
-
-@socketio.on('join')
-def on_join(data):
-    try:
-        room = data['room']
-        join_room(room)
-        print(f"User {data['username']} joined {room}")
-        emit('status', {'msg': f"{data['username']} has joined the chat."}, room=room)
-    except Exception as e:
-        print(f"Error in join event: {e}")
-
-@socketio.on('leave')
-def on_leave(data):
-    try:
-        room = data['room']
-        leave_room(room)
-        print(f"User {data['username']} left {room}")
-        emit('status', {'msg': f"{data['username']} has left the chat."}, room=room)
-    except Exception as e:
-        print(f"Error in leave event: {e}")
-
-@socketio.on('message')
-def handle_message(data):
-    try:
-        room = data['room']
-        message = {
-            'room': room,
-            'user_id': data['user_id'],
-            'username': data['username'],
-            'content': data['message'],
-            'timestamp': datetime.utcnow()
-        }
-        print(f"Received message: {message}")
-        result = messages.insert_one(message)
-        message['_id'] = str(result.inserted_id)
-        message['timestamp'] = message['timestamp'].isoformat()
-        emit('message', message, room=room)
-    except Exception as e:
-        print(f"Error handling message: {e}")
+        print("❌ 오류 발생:", e)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True) 
+    app.run(host='0.0.0.0', port=8000, debug=True) 
+
