@@ -163,10 +163,12 @@ def register():
         print(f"Error in register endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route("/chat", methods=["POST", "GET"])
+@app.route("/chat", methods=["POST", "OPTIONS"])
 def chat():
-    if request.method == "GET":
-        return jsonify({"error": "GET not allowed"}), 405  # ← 여기 추가!
+    if request.method == "OPTIONS":
+        # CORS preflight 요청에 대한 응답
+        return jsonify({"message": "CORS preflight OK"}), 200
+
     try:
         data = request.get_json()
         if not data or not data.get("message"):
@@ -177,9 +179,8 @@ def chat():
         partner_name = data.get("partnerName")
         partner_role = data.get("partnerRole")
 
-        # 파트너 정보를 시스템 메시지에 포함
         system_message = f"당신은 {partner_name}입니다. {partner_role} 역할을 맡고 있습니다. 이 역할에 맞는 대화를 해주세요."
-        
+
         client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -191,7 +192,6 @@ def chat():
 
         reply = response.choices[0].message.content
         return jsonify({"response": reply})
-        print(reply)
     except Exception as e:
         print("❌ 오류 발생:", e)
         return jsonify({"error": str(e)}), 500
