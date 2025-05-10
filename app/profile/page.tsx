@@ -17,7 +17,7 @@ import { BarChart, MessageSquare, Award, Settings, User, Calendar, CheckCircle2,
 import { useUser } from "@/context/UserContext"
 
 export default function ProfilePage() {
-  const { user } = useUser()
+  const { user, challenges, claimChallenge } = useUser()
   const [activeTab, setActiveTab] = useState("overview")
 
   if (!user) {
@@ -92,15 +92,24 @@ export default function ProfilePage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(user.dailyChallenges ?? []).map((challenge) => (
-                    <div key={challenge.id} className="flex items-center justify-between">
+                  {challenges.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium">{challenge.title}</p>
-                        <p className="text-sm text-gray-500">{challenge.description}</p>
+                        <p className="font-medium">{c.title}</p>
+                        <p className="text-sm text-gray-500">{c.description}</p>
                       </div>
-                      <Badge variant={challenge.completed ? "default" : "outline"}>
-                        {challenge.completed ? "완료" : "+" + challenge.points + "포인트"}
-                      </Badge>
+                      {c.achieved && !c.claimed ? (
+                        <button
+                          className="px-4 py-1 bg-pink-500 text-white rounded-full font-bold"
+                          onClick={() => claimChallenge(c.id)}
+                        >
+                          포인트 적립 ({c.points}P)
+                        </button>
+                      ) : c.achieved && c.claimed ? (
+                        <Badge variant="default">완료</Badge>
+                      ) : (
+                        <Badge variant="outline">+{c.points}포인트</Badge>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -128,18 +137,31 @@ export default function ProfilePage() {
         {/* 챌린지 탭 */}
         <TabsContent value="challenges">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {(user.dailyChallenges ?? []).map((challenge) => (
-              <Card key={challenge.id}>
+            {challenges.map((c) => (
+              <Card key={c.id}>
                 <CardHeader>
-                  <CardTitle>{challenge.title}</CardTitle>
-                  <CardDescription>{challenge.description}</CardDescription>
+                  <CardTitle>{c.title}</CardTitle>
+                  <CardDescription>{c.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
-                    <Badge variant={challenge.completed ? "default" : "outline"}>
-                      {challenge.completed ? "완료" : "진행중"}
+                    <Badge variant={c.achieved ? "default" : "outline"}>
+                      {c.achieved ? "완료" : "진행중"}
                     </Badge>
-                    <span className="text-pink-500 font-medium">+{challenge.points} 포인트</span>
+                    {c.achieved && !c.claimed && (
+                      <button
+                        className="mt-2 px-4 py-1 bg-pink-500 text-white rounded-full font-bold"
+                        onClick={() => claimChallenge(c.id)}
+                      >
+                        포인트 적립 ({c.points}P)
+                      </button>
+                    )}
+                    {c.achieved && c.claimed && (
+                      <span className="text-green-600 font-bold ml-2">적립 완료!</span>
+                    )}
+                    {!c.achieved && (
+                      <span className="text-gray-400 font-bold ml-2">미달성</span>
+                    )}
                   </div>
                 </CardContent>
               </Card>

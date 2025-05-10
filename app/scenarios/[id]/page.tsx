@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,9 +9,40 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Send, Mic, MicOff, Info } from "lucide-react"
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useUser } from "@/context/UserContext"
 
 // 시나리오 데이터
 const scenarioData = {
+  "shopping-interactions": {
+    title: "쇼핑 상호작용",
+    description: "도움 요청, 구매, 반품 처리 등을 연습해보세요.",
+    character: {
+      name: "유나",
+      role: "점원",
+      avatar: "/cat.png",
+      greeting: "어서오세요! 무엇을 도와드릴까요?",
+    },
+  },
+  "job-interview": {
+    title: "취업 면접",
+    description: "연습 질문과 피드백으로 취업 면접을 준비해보세요.",
+    character: {
+      name: "면접관",
+      role: "면접관",
+      avatar: "/dog.png",
+      greeting: "자기소개 부탁드립니다.",
+    },
+  },
+  "classroom-participation": {
+    title: "수업 참여",
+    description: "질문하기와 그룹 토론 참여를 연습해보세요.",
+    character: {
+      name: "선생님",
+      role: "교사",
+      avatar: "/mouse.png",
+      greeting: "오늘 수업에 대해 궁금한 점이 있나요?",
+    },
+  },
   "meeting-new-people": {
     title: "새로운 사람 만나기",
     description:
@@ -19,7 +50,7 @@ const scenarioData = {
     character: {
       name: "민지",
       role: "마케팅 매니저",
-      avatar: "/default_profile.png?height=100&width=100",
+      avatar: "/jimin.png",
       greeting: "안녕하세요! 전에 뵌 적이 없는 것 같네요. 저는 테크코프에서 마케팅을 담당하고 있는 민지라고 합니다.",
     },
   },
@@ -30,7 +61,7 @@ const scenarioData = {
     character: {
       name: "준호",
       role: "팀원",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/friend.png",
       greeting: "저한테 할 말이 있다고 했던 것 같은데요?",
     },
   },
@@ -40,7 +71,7 @@ const scenarioData = {
     character: {
       name: "소연",
       role: "친구",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/soyeon.png",
       greeting: "안녕! 만나서 반가워. 주말 어떻게 보냈어?",
     },
   },
@@ -56,18 +87,20 @@ type Message = {
   }
 }
 
-export default function ScenarioPage({ params }: { params: { id: string } }) {
-  const scenarioId = params.id
+export default function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: scenarioId } = use(params)
   const scenario = scenarioData[scenarioId as keyof typeof scenarioData] || {
     title: "시나리오",
     description: "설명이 없습니다",
     character: {
       name: "캐릭터",
       role: "역할",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/cat.png",
       greeting: "안녕하세요!",
     },
   }
+
+  const { achieveChallenge } = useUser()
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -133,12 +166,18 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
 
       setMessages((prev) => [...prev, aiMessage])
       setIsLoading(false)
+      achieveChallenge("scenario-once")
     }, 1500)
   }
 
   const toggleRecording = () => {
     setIsRecording(!isRecording)
     // 실제 앱에서는 음성 인식 처리
+  }
+
+  const handleScenarioComplete = () => {
+    // 시나리오 완료 처리
+    achieveChallenge("scenario-once")
   }
 
   return (
@@ -160,7 +199,7 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4">
-              <AvatarImage src={scenario.character.avatar || "/placeholder.svg"} alt={scenario.character.name} />
+              <AvatarImage src={scenario.character.avatar} alt={scenario.character.name} />
               <AvatarFallback>{scenario.character.name[0]}</AvatarFallback>
             </Avatar>
             <h3 className="text-xl font-semibold">{scenario.character.name}</h3>
