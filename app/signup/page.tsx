@@ -120,7 +120,7 @@ function SignupForm() {
     }
 
     try {
-      const response = await fetch('http://172.16.12.38:8000/api/auth/register', {
+      const response = await fetch('http://0.0.0.0:8000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
