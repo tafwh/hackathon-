@@ -32,7 +32,7 @@ const chatPartners: ChatPartner[] = [
 ]
 
 export default function ChatPage() {
-  const { user } = useUser()
+  const { user, achieveChallenge } = useUser()
   const [selectedPartner, setSelectedPartner] = useState<ChatPartner>(chatPartners[0])
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -109,6 +109,7 @@ export default function ChatPage() {
       }
 
       setMessages((prev) => [...prev, aiMessage])
+      achieveChallenge("chat-once")
     } catch (error) {
       console.error('채팅 API 오류:', error)
       // 에러 발생 시 사용자에게 알림

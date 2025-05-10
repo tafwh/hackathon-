@@ -37,16 +37,59 @@ type User = {
   }[]
 } | null
 
+type Challenge = {
+  id: string
+  title: string
+  description: string
+  achieved: boolean
+  claimed: boolean
+  points: number
+}
+
+const initialChallenges: Challenge[] = [
+  {
+    id: "chat-once",
+    title: "AI 채팅 첫 이용",
+    description: "AI 채팅을 1회 이용해보세요.",
+    achieved: false,
+    claimed: false,
+    points: 10,
+  },
+  {
+    id: "scenario-once",
+    title: "시나리오 첫 완료",
+    description: "시나리오를 1회 완료해보세요.",
+    achieved: false,
+    claimed: false,
+    points: 10,
+  },
+  {
+    id: "community-post",
+    title: "커뮤니티 첫 글 작성",
+    description: "커뮤니티에 글을 1회 작성해보세요.",
+    achieved: false,
+    claimed: false,
+    points: 10,
+  },
+]
+
 const UserContext = createContext<{
   user: User
   setUser: (user: User) => void
+  challenges: Challenge[]
+  achieveChallenge: (id: string) => void
+  claimChallenge: (id: string) => void
 }>({
   user: null,
   setUser: () => {},
+  challenges: initialChallenges,
+  achieveChallenge: () => {},
+  claimChallenge: () => {},
 })
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User>(null)
+  const [challenges, setChallenges] = useState<Challenge[]>(initialChallenges)
   const router = useRouter()
 
   // user를 localStorage에 저장
@@ -79,8 +122,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     router.push("/") // 홈으로 이동
   }
 
+  // 챌린지 달성 함수
+  const achieveChallenge = (id: string) => {
+    setChallenges((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, achieved: true } : c))
+    )
+  }
+
+  // 포인트 적립 함수
+  const claimChallenge = (id: string) => {
+    setChallenges((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, claimed: true } : c))
+    )
+    const challenge = challenges.find((c) => c.id === id)
+    if (user && challenge && !challenge.claimed) {
+      setUser({ ...user, socialPoints: user.socialPoints + challenge.points })
+    }
+  }
+
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, challenges, achieveChallenge, claimChallenge }}>
       {children}
     </UserContext.Provider>
   )
