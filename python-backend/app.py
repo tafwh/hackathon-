@@ -40,18 +40,28 @@ print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
 openai.api_base = "https://api.openai.com/v1"
 # Flask app setup
 app = Flask(__name__)
+# 🔥 CORS 설정 수정
 CORS(app, resources={
     r"/*": {
-        "origins": ["http://localhost:3000", "http://172.16.12.38:3000"],
+        "origins": [
+            "http://localhost:3000",
+            "https://hackathon-git-master-tafwhs-projects.vercel.app",
+            "hackathon-9oyywzz2w-tafwhs-projects.vercel.app",  # Vercel에서 실제 배포된 주소!
+        ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
         "supports_credentials": True
     }
 })
 
+# 🔥 cors_allowed_origins 도 위에서와 똑같이!
 socketio = SocketIO(
     app,
-    cors_allowed_origins=["http://localhost:3000"],
+    cors_allowed_origins=[
+        "http://localhost:3000",
+        "https://hackathon-git-master-tafwhs-projects.vercel.app",
+        "hackathon-9oyywzz2w-tafwhs-projects.vercel.app"
+    ],
     async_mode='threading',
     logger=True,
     engineio_logger=True,
