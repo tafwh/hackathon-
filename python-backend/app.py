@@ -182,6 +182,42 @@ def chat():
         print("❌ 오류 발생:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route("/scenarios", methods=["POST"])
+def scenario_chat():
+    try:
+        data = request.get_json()
+        if not data or not data.get("message"):
+            return jsonify({"error": "Message is required"}), 400
+
+        user_message = data.get("message")
+        
+        scenario_id    = data.get("scenarioId")
+        character_name = data.get("characterName")
+        character_role = data.get("characterRole")
+
+        # 파트너 정보를 시스템 메시지에 포함
+        system_message = (
+            f"당신은 시나리오 `{scenario_id}`에 등장하는 "
+            f"{character_name}이고, 역할은 `{character_role}`입니다. "
+            "이 역할에 맞추어 대답해주세요."
+        )
+        
+        client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        reply = response.choices[0].message.content
+        return jsonify({"response": reply})
+        print(reply)
+    except Exception as e:
+        print("❌ 오류 발생:", e)
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/chat/group-chat/messages', methods=['GET'])
 def get_messages():
     try:

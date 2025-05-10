@@ -11,6 +11,7 @@ import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useUser } from "@/context/UserContext"
 
+
 // 시나리오 데이터
 const scenarioData = {
   "shopping-interactions": {
@@ -54,6 +55,7 @@ const scenarioData = {
       greeting: "안녕하세요! 전에 뵌 적이 없는 것 같네요. 저는 테크코프에서 마케팅을 담당하고 있는 민지라고 합니다.",
     },
   },
+
   "resolving-conflicts": {
     title: "갈등 해결하기",
     description:
@@ -75,6 +77,7 @@ const scenarioData = {
       greeting: "안녕! 만나서 반가워. 주말 어떻게 보냈어?",
     },
   },
+
 }
 
 type Message = {
@@ -87,8 +90,10 @@ type Message = {
   }
 }
 
+
 export default function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: scenarioId } = use(params)
+
   const scenario = scenarioData[scenarioId as keyof typeof scenarioData] || {
     title: "시나리오",
     description: "설명이 없습니다",
@@ -114,15 +119,13 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 메시지가 변경될 때 스크롤 맨 아래로
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // 사용자 메시지 추가
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
@@ -132,47 +135,48 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
     setInput("")
     setIsLoading(true)
 
-    // AI 응답 시뮬레이션
-    setTimeout(() => {
-      // 모의 AI 응답 및 피드백 생성
-      const responses = [
-        "흥미롭네요! 그것에 대해 더 자세히 알려주세요.",
-        "당신의 기분을 이해합니다. 다음에 무엇을 해야 할지 어떻게 생각하시나요?",
-        "당신의 관점을 이해합니다. 이런 방식으로 생각해 보셨나요?",
-        "좋은 지적이네요! 전에는 그렇게 생각해 본 적이 없었어요.",
-      ]
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          scenarioId,
+          characterName: scenario.character.name,
+          characterRole: scenario.character.role,
+        }),
+      })
 
-      const feedbacks = [
-        {
-          tone: "positive" as const,
-          message: "잘했어요! 당신의 응답은 명확하고 친절했습니다.",
-        },
-        {
-          tone: "neutral" as const,
-          message: "응답은 괜찮았지만, 대화를 계속 이어가기 위해 더 자세한 내용을 추가하는 것을 고려해보세요.",
-        },
-        {
-          tone: "positive" as const,
-          message: "대화를 계속하기 위해 열린 질문을 사용한 것이 훌륭했습니다.",
-        },
-      ]
+      if (!response.ok) {
+        throw new Error('API 요청 실패')
+      }
 
+      const data = await response.json()
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: responses[Math.floor(Math.random() * responses.length)],
-        feedback: feedbacks[Math.floor(Math.random() * feedbacks.length)],
+        text: data.response,
       }
 
       setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      console.error('채팅 API 오류:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: '죄송해요, 응답을 불러오지 못했어요. 다시 시도해주세요.',
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
       achieveChallenge("scenario-once")
-    }, 1500)
+    }
   }
 
   const toggleRecording = () => {
     setIsRecording(!isRecording)
-    // 실제 앱에서는 음성 인식 처리
   }
 
   const handleScenarioComplete = () => {
@@ -192,7 +196,6 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 캐릭터 정보 카드 */}
         <Card className="lg:col-span-1 rounded-3xl">
           <CardHeader>
             <CardTitle>대화 상대</CardTitle>
@@ -207,25 +210,10 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
           </CardContent>
         </Card>
 
-        {/* 채팅 인터페이스 */}
         <Card className="lg:col-span-2 rounded-3xl">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>대화</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full">
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="rounded-xl">
-                    <p className="max-w-xs">
-                      대화 기술을 연습해보세요. 응답에 대한 피드백을 받아 실력을 향상시킬 수 있습니다.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </CardHeader>
           <CardContent>
@@ -233,35 +221,16 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex flex-col ${message.sender === "user" ? "items-end" : "items-start"}`}
-                >
+                  className={`flex flex-col ${message.sender === "user" ? "items-end" : "items-start"}`}>
                   <div
                     className={`max-w-[80%] p-3 rounded-2xl ${
-                      message.sender === "user" ? "bg-pink-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                      message.sender === "user"
+                        ? "bg-pink-500 text-white"
+                        : "bg-gray-100 dark:bg-gray-800"
                     }`}
                   >
                     <p>{message.text}</p>
                   </div>
-
-                  {message.feedback && (
-                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 max-w-[80%]">
-                      <div className="flex items-center mb-1">
-                        <Badge
-                          variant={
-                            message.feedback.tone === "positive"
-                              ? "default"
-                              : message.feedback.tone === "neutral"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className="rounded-full"
-                        >
-                          피드백
-                        </Badge>
-                      </div>
-                      <p className="text-sm">{message.feedback.message}</p>
-                    </div>
-                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
@@ -273,8 +242,7 @@ export default function ScenarioPage({ params }: { params: Promise<{ id: string 
                 variant="outline"
                 size="icon"
                 onClick={toggleRecording}
-                className={`rounded-full ${isRecording ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" : ""}`}
-              >
+                className={`rounded-full ${isRecording ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" : ""}`}>
                 {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
               <Textarea
