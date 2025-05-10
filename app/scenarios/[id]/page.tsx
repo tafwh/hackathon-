@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,9 +9,41 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Send, Mic, MicOff, Info } from "lucide-react"
 import Link from "next/link"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useUser } from "@/context/UserContext"
+
 
 // 시나리오 데이터
 const scenarioData = {
+  "shopping-interactions": {
+    title: "쇼핑 상호작용",
+    description: "도움 요청, 구매, 반품 처리 등을 연습해보세요.",
+    character: {
+      name: "유나",
+      role: "점원",
+      avatar: "/cat.png",
+      greeting: "어서오세요! 무엇을 도와드릴까요?",
+    },
+  },
+  "job-interview": {
+    title: "취업 면접",
+    description: "연습 질문과 피드백으로 취업 면접을 준비해보세요.",
+    character: {
+      name: "면접관",
+      role: "면접관",
+      avatar: "/dog.png",
+      greeting: "자기소개 부탁드립니다.",
+    },
+  },
+  "classroom-participation": {
+    title: "수업 참여",
+    description: "질문하기와 그룹 토론 참여를 연습해보세요.",
+    character: {
+      name: "선생님",
+      role: "교사",
+      avatar: "/mouse.png",
+      greeting: "오늘 수업에 대해 궁금한 점이 있나요?",
+    },
+  },
   "meeting-new-people": {
     title: "새로운 사람 만나기",
     description:
@@ -19,10 +51,11 @@ const scenarioData = {
     character: {
       name: "민지",
       role: "마케팅 매니저",
-      avatar: "/default_profile.png?height=100&width=100",
+      avatar: "/jimin.png",
       greeting: "안녕하세요! 전에 뵌 적이 없는 것 같네요. 저는 테크코프에서 마케팅을 담당하고 있는 민지라고 합니다.",
     },
   },
+
   "resolving-conflicts": {
     title: "갈등 해결하기",
     description:
@@ -30,7 +63,7 @@ const scenarioData = {
     character: {
       name: "준호",
       role: "팀원",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/friend.png",
       greeting: "저한테 할 말이 있다고 했던 것 같은데요?",
     },
   },
@@ -40,10 +73,11 @@ const scenarioData = {
     character: {
       name: "소연",
       role: "친구",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/soyeon.png",
       greeting: "안녕! 만나서 반가워. 주말 어떻게 보냈어?",
     },
   },
+
 }
 
 type Message = {
@@ -56,18 +90,22 @@ type Message = {
   }
 }
 
-export default function ScenarioPage({ params }: { params: { id: string } }) {
-  const scenarioId = params.id
+
+export default function ScenarioPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: scenarioId } = use(params)
+
   const scenario = scenarioData[scenarioId as keyof typeof scenarioData] || {
     title: "시나리오",
     description: "설명이 없습니다",
     character: {
       name: "캐릭터",
       role: "역할",
-      avatar: "/placeholder.svg?height=100&width=100",
+      avatar: "/cat.png",
       greeting: "안녕하세요!",
     },
   }
+
+  const { achieveChallenge } = useUser()
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -81,15 +119,13 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // 메시지가 변경될 때 스크롤 맨 아래로
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return
 
-    // 사용자 메시지 추가
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: "user",
@@ -99,46 +135,53 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
     setInput("")
     setIsLoading(true)
 
-    // AI 응답 시뮬레이션
-    setTimeout(() => {
-      // 모의 AI 응답 및 피드백 생성
-      const responses = [
-        "흥미롭네요! 그것에 대해 더 자세히 알려주세요.",
-        "당신의 기분을 이해합니다. 다음에 무엇을 해야 할지 어떻게 생각하시나요?",
-        "당신의 관점을 이해합니다. 이런 방식으로 생각해 보셨나요?",
-        "좋은 지적이네요! 전에는 그렇게 생각해 본 적이 없었어요.",
-      ]
+    try {
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          scenarioId,
+          characterName: scenario.character.name,
+          characterRole: scenario.character.role,
+        }),
+      })
 
-      const feedbacks = [
-        {
-          tone: "positive" as const,
-          message: "잘했어요! 당신의 응답은 명확하고 친절했습니다.",
-        },
-        {
-          tone: "neutral" as const,
-          message: "응답은 괜찮았지만, 대화를 계속 이어가기 위해 더 자세한 내용을 추가하는 것을 고려해보세요.",
-        },
-        {
-          tone: "positive" as const,
-          message: "대화를 계속하기 위해 열린 질문을 사용한 것이 훌륭했습니다.",
-        },
-      ]
+      if (!response.ok) {
+        throw new Error('API 요청 실패')
+      }
 
+      const data = await response.json()
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: responses[Math.floor(Math.random() * responses.length)],
-        feedback: feedbacks[Math.floor(Math.random() * feedbacks.length)],
+        text: data.response,
       }
 
       setMessages((prev) => [...prev, aiMessage])
+    } catch (error) {
+      console.error('채팅 API 오류:', error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: '죄송해요, 응답을 불러오지 못했어요. 다시 시도해주세요.',
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1500)
+      achieveChallenge("scenario-once")
+    }
   }
 
   const toggleRecording = () => {
     setIsRecording(!isRecording)
-    // 실제 앱에서는 음성 인식 처리
+  }
+
+  const handleScenarioComplete = () => {
+    // 시나리오 완료 처리
+    achieveChallenge("scenario-once")
   }
 
   return (
@@ -153,14 +196,13 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 캐릭터 정보 카드 */}
         <Card className="lg:col-span-1 rounded-3xl">
           <CardHeader>
             <CardTitle>대화 상대</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center text-center">
             <Avatar className="h-24 w-24 mb-4">
-              <AvatarImage src={scenario.character.avatar || "/placeholder.svg"} alt={scenario.character.name} />
+              <AvatarImage src={scenario.character.avatar} alt={scenario.character.name} />
               <AvatarFallback>{scenario.character.name[0]}</AvatarFallback>
             </Avatar>
             <h3 className="text-xl font-semibold">{scenario.character.name}</h3>
@@ -168,25 +210,10 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
 
-        {/* 채팅 인터페이스 */}
         <Card className="lg:col-span-2 rounded-3xl">
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>대화</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full">
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="rounded-xl">
-                    <p className="max-w-xs">
-                      대화 기술을 연습해보세요. 응답에 대한 피드백을 받아 실력을 향상시킬 수 있습니다.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </CardHeader>
           <CardContent>
@@ -194,35 +221,16 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex flex-col ${message.sender === "user" ? "items-end" : "items-start"}`}
-                >
+                  className={`flex flex-col ${message.sender === "user" ? "items-end" : "items-start"}`}>
                   <div
                     className={`max-w-[80%] p-3 rounded-2xl ${
-                      message.sender === "user" ? "bg-pink-500 text-white" : "bg-gray-100 dark:bg-gray-800"
+                      message.sender === "user"
+                        ? "bg-pink-500 text-white"
+                        : "bg-gray-100 dark:bg-gray-800"
                     }`}
                   >
                     <p>{message.text}</p>
                   </div>
-
-                  {message.feedback && (
-                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700 max-w-[80%]">
-                      <div className="flex items-center mb-1">
-                        <Badge
-                          variant={
-                            message.feedback.tone === "positive"
-                              ? "default"
-                              : message.feedback.tone === "neutral"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className="rounded-full"
-                        >
-                          피드백
-                        </Badge>
-                      </div>
-                      <p className="text-sm">{message.feedback.message}</p>
-                    </div>
-                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
@@ -234,8 +242,7 @@ export default function ScenarioPage({ params }: { params: { id: string } }) {
                 variant="outline"
                 size="icon"
                 onClick={toggleRecording}
-                className={`rounded-full ${isRecording ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" : ""}`}
-              >
+                className={`rounded-full ${isRecording ? "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400" : ""}`}>
                 {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
               <Textarea

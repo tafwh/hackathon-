@@ -1,11 +1,20 @@
+"use client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Users, Calendar, UserPlus } from "lucide-react"
+import { useUser } from "@/context/UserContext"
 
 export default function CommunityPage() {
+  const { achieveChallenge } = useUser()
+
+  const handlePostSubmit = () => {
+    // 글 작성 처리
+    achieveChallenge("community-post")
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
