@@ -45,8 +45,9 @@ CORS(app, resources={
     r"/*": {
         "origins": [
             "http://localhost:3000",
+            "https://hackathon-gamma-orpin.vercel.app",
             "https://hackathon-git-master-tafwhs-projects.vercel.app",
-            "hackathon-9oyywzz2w-tafwhs-projects.vercel.app",  # Vercel에서 실제 배포된 주소!
+            "https://hackathon-h5cwnk2dy-tafwhs-projects.vercel.app"
         ],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
@@ -59,8 +60,9 @@ socketio = SocketIO(
     app,
     cors_allowed_origins=[
         "http://localhost:3000",
+        "https://hackathon-gamma-orpin.vercel.app",
         "https://hackathon-git-master-tafwhs-projects.vercel.app",
-        "hackathon-9oyywzz2w-tafwhs-projects.vercel.app"
+        "https://hackathon-h5cwnk2dy-tafwhs-projects.vercel.app"
     ],
     async_mode='threading',
     logger=True,
