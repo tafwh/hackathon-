@@ -120,7 +120,7 @@ function SignupForm() {
     }
 
     try {
-      const response = await fetch('http://0.0.0.0:8000/api/auth/register', {
+      const response = await fetch('https://hackathon-cpct.onrender.com/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

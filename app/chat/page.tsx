@@ -82,7 +82,7 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://0.0.0.0:8000/chat', {
+      const response = await fetch('https://hackathon-cpct.onrender.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,6 +92,7 @@ export default function ChatPage() {
           partnerId: selectedPartner.id,
           partnerName: selectedPartner.name,
           partnerRole: selectedPartner.role,
+
         }),
       })
 
