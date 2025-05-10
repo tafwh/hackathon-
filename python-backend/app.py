@@ -234,9 +234,11 @@ def get_messages():
         print(f"Error fetching messages: {e}")
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8000)), debug=True, allow_unsafe_werkzeug=True)
-
 @app.route("/")
 def index():
     return "✅ Flask 백엔드가 정상적으로 작동 중입니다!"
+
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get("PORT", 8000)), debug=True, allow_unsafe_werkzeug=True)
+
