@@ -163,8 +163,10 @@ def register():
         print(f"Error in register endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route("/chat", methods=["POST"])
+@app.route("/chat", methods=["POST", "GET"])
 def chat():
+    if request.method == "GET":
+        return jsonify({"error": "GET not allowed"}), 405  # ← 여기 추가!
     try:
         data = request.get_json()
         if not data or not data.get("message"):
