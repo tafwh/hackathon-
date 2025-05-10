@@ -33,10 +33,11 @@ except Exception as e:
 
 db = client.scla
 users = db.users
+
 messages = db.messages
 openai.api_key = os.getenv('OPENAI_API_KEY')
+print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
 openai.api_base = "https://api.openai.com/v1"
-
 # Flask app setup
 app = Flask(__name__)
 CORS(app, resources={
@@ -176,6 +177,7 @@ def chat():
 
         reply = response.choices[0].message.content
         return jsonify({"response": reply})
+        print(reply)
     except Exception as e:
         print("❌ 오류 발생:", e)
         return jsonify({"error": str(e)}), 500
